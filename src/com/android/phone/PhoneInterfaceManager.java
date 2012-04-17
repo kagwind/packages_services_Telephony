@@ -2036,4 +2036,8 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
 
         return returnValue;
     }
+
+    public int getLteOnGsmMode() {
+        return mPhone.getLteOnGsmMode();
+    }
 }
