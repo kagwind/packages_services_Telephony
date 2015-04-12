@@ -193,6 +193,8 @@ public class CallFeaturesSetting extends PreferenceActivity
     private static final String PHONE_ACCOUNT_SETTINGS_KEY =
             "phone_account_settings_preference_screen";
 
+    private static final String FLIP_ACTION_KEY = "flip_action";
+
     private Intent mContactListIntent;
 
     /** Event for Async voicemail change call */
@@ -271,6 +273,7 @@ public class CallFeaturesSetting extends PreferenceActivity
     private SwitchPreference mVoicemailNotificationVibrate;
     private AccountSelectionPreference mDefaultOutgoingAccount;
 
+    private ListPreference mFlipAction;
     private SwitchPreference mProxSpeaker;
     private SlimSeekBarPreference mProxSpeakerDelay;
     private SwitchPreference mProxSpeakerIncallOnly;
@@ -608,9 +611,21 @@ public class CallFeaturesSetting extends PreferenceActivity
             int index = mCallRecordingFormat.findIndexOfValue((String) objValue);
             Settings.System.putInt(mPhone.getContext().getContentResolver(), Settings.System.CALL_RECORDING_FORMAT, value);
             mCallRecordingFormat.setSummary(mCallRecordingFormat.getEntries()[index]);
+        } else if (preference == mFlipAction) {
+            int index = mFlipAction.findIndexOfValue((String) objValue);
+            Settings.System.putInt(getContentResolver(),
+                Settings.System.CALL_FLIP_ACTION_KEY, index);
+            updateFlipActionSummary(index);
         }
         // always let the preference setting proceed.
         return true;
+    }
+
+    private void updateFlipActionSummary(int value) {
+        if (mFlipAction != null) {
+            String[] summaries = getResources().getStringArray(R.array.flip_action_summary_entries);
+            mFlipAction.setSummary(getString(R.string.flip_action_summary, summaries[value]));
+        }
     }
 
     @Override
@@ -1594,6 +1609,8 @@ public class CallFeaturesSetting extends PreferenceActivity
         mButtonTTY = (ListPreference) findPreference(BUTTON_TTY_KEY);
         mVoicemailProviders = (ListPreference) findPreference(BUTTON_VOICEMAIL_PROVIDER_KEY);
 
+        mFlipAction = (ListPreference) findPreference(FLIP_ACTION_KEY);
+
         mProxSpeaker = (SwitchPreference) findPreference(PROX_AUTO_SPEAKER);
         mProxSpeakerIncallOnly = (SwitchPreference) findPreference(PROX_AUTO_SPEAKER_INCALL_ONLY);
         mProxSpeakerDelay = (SlimSeekBarPreference) findPreference(PROX_AUTO_SPEAKER_DELAY);
@@ -1655,6 +1672,10 @@ public class CallFeaturesSetting extends PreferenceActivity
                 prefSet.removePreference(mButtonTTY);
                 mButtonTTY = null;
             }
+        }
+
+        if (mFlipAction != null) {
+            mFlipAction.setOnPreferenceChangeListener(this);
         }
 
         final ContentResolver contentResolver = getContentResolver();
@@ -1763,6 +1784,13 @@ public class CallFeaturesSetting extends PreferenceActivity
                     TelecomManager.TTY_MODE_OFF);
             mButtonTTY.setValue(Integer.toString(settingsTtyMode));
             updatePreferredTtyModeSummary(settingsTtyMode);
+        }
+
+        if (mFlipAction != null) {
+            int flipAction = Settings.System.getInt(getContentResolver(),
+                    Settings.System.CALL_FLIP_ACTION_KEY, 2);
+            mFlipAction.setValue(String.valueOf(flipAction));
+            updateFlipActionSummary(flipAction);
         }
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(
